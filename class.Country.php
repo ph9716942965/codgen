@@ -2,10 +2,10 @@
 namespace TAS;
 
 
-class {~~CLASS~~} extends \TAS\Entity
+class Country extends \TAS\Entity
 {
 
-    {~~FIELDS~~}
+    public $id, $name;
 
     public function __construct($id = 0)
     {
@@ -18,13 +18,13 @@ class {~~CLASS~~} extends \TAS\Entity
     public function Load($id = 0)
     {
         if (! is_numeric($id) || (int) $id <= 0) {
-            if ($this->{~~Key~~} > 0) {
-                $id = $this->{~~Key~~};
+            if ($this->id > 0) {
+                $id = $this->id;
             } else {
                 return false;
             }
         }
-        $rs = $GLOBALS['db']->Execute("Select * from " . $GLOBALS['Tables']['{~~Table~~}'] . " where {~~Key~~}=" . (int) $id . " limit 1");
+        $rs = $GLOBALS['db']->Execute("Select * from " . $GLOBALS['Tables']['country'] . " where id=" . (int) $id . " limit 1");
 
         if (DB::Count($rs) > 0) {
             $this->LoadFromRecordSet($rs);
@@ -36,16 +36,20 @@ class {~~CLASS~~} extends \TAS\Entity
 
     public static function GetFields($id = 0)
     {
-        $fields = \TAS\Entity::GetFieldsGeneric($GLOBALS['Tables']['{~~Table~~}']);
-        ${~~Table~~} = new \TAS\{~~CLASS~~}();
-        unset($fields['{~~Key~~}']);
-        {~~Fields~~}
+        $fields = \TAS\Entity::GetFieldsGeneric($GLOBALS['Tables']['country']);
+        $country = new \TAS\Country();
+        unset($fields['id']);
+        $fields['name']['label'] = 'Name';
+$fields['name']['type'] = 'text';
+$fields['name']['required'] = true;
+
+
 
 
         if ($id > 0) {
-            ${~~Table~~} = new \TAS\{~~CLASS~~}($id);
+            $country = new \TAS\Country($id);
             
-            $a = ${~~Table~~}->ObjectAsArray();
+            $a = $country->ObjectAsArray();
             foreach ($a as $i => $v) {
                 if (isset($fields[strtolower($i)])) {
                     $fields[strtolower($i)]['value'] = $v;
@@ -74,7 +78,11 @@ class {~~CLASS~~} extends \TAS\Entity
     {
 
 
-        {~~AddValidation~~}
+        if (empty($values['name'])) {
+                self::SetError("Name is required", "3");
+                return false;
+                
+            }
         if (! self::Validate($values, $GLOBALS['Tables']['user'])) {
             self::SetError("Please use unique user name", "10");
             return false;
@@ -93,7 +101,7 @@ class {~~CLASS~~} extends \TAS\Entity
                 return false;
             }
             
-        // else if (! self::Validate($values, $GLOBALS['Tables']['{~~Table~~}'])) {
+        // else if (! self::Validate($values, $GLOBALS['Tables']['country'])) {
         //     self::SetError("Please use unique user name", "10");
         //     return false;
             
@@ -107,7 +115,7 @@ class {~~CLASS~~} extends \TAS\Entity
         //     if (isset($values['phone'])) {
         //         $values['phone'] = preg_replace('/[^0-9]/', '', $values['phone']);
                 
-        //         if ($GLOBALS['db']->Insert($GLOBALS['Tables']['{~~Table~~}'], $values)) {
+        //         if ($GLOBALS['db']->Insert($GLOBALS['Tables']['country'], $values)) {
         //             $id = $GLOBALS['db']->GeneratedID();
         //             return ($id);
         //         }
@@ -132,15 +140,15 @@ class {~~CLASS~~} extends \TAS\Entity
         
         
 
-        if (! self::Validate($values, '{~~Table~~}')) {
+        if (! self::Validate($values, 'country')) {
             return false;
         }
-        // else if (! {~~CLASS~~}::Unique{~~CLASS~~}Name($values, $values['{~~Key~~}'])) {
-        //     self::SetError("Please use unique {~~CLASS~~} name", "10");
+        // else if (! Country::UniqueCountryName($values, $values['id'])) {
+        //     self::SetError("Please use unique Country name", "10");
         //     return false;
         // }
          else {
-            if ($GLOBALS['db']->Update($GLOBALS['Tables']['{~~Table~~}'], $values, $values['{~~Key~~}'], '{~~Key~~}')) {
+            if ($GLOBALS['db']->Update($GLOBALS['Tables']['country'], $values, $values['id'], 'id')) {
                 return true;
             } else {
                 return false;
@@ -152,7 +160,7 @@ class {~~CLASS~~} extends \TAS\Entity
   
 
     /**
-     * Delete the {~~Table~~}
+     * Delete the country
      *
      * @param integer $id
      * @return boolean
@@ -165,7 +173,7 @@ class {~~CLASS~~} extends \TAS\Entity
         }
         $id = floor((int) $id);
         
-        $delete = $GLOBALS['db']->Execute("Delete from " . $GLOBALS['Tables']['{~~Table~~}'] . " where {~~Key~~}=" . (int) $id . " limit 1");
+        $delete = $GLOBALS['db']->Execute("Delete from " . $GLOBALS['Tables']['country'] . " where id=" . (int) $id . " limit 1");
         return true;
     }
     
@@ -178,13 +186,13 @@ class {~~CLASS~~} extends \TAS\Entity
      */
 
 
-    public static function Unique{~~CLASS~~}Name($d, ${~~Key~~} = 0)
+    public static function UniqueCountryName($d, $id = 0)
     {
-        if (${~~Key~~} == 0) {
-            $count = $GLOBALS['db']->ExecuteScalar("select count(*) from " . $GLOBALS['Tables']['{~~Table~~}'] . " where {~~Table~~}name='" . $d['{~~Table~~}name'] . "'");
+        if ($id == 0) {
+            $count = $GLOBALS['db']->ExecuteScalar("select count(*) from " . $GLOBALS['Tables']['country'] . " where countryname='" . $d['countryname'] . "'");
         } else {
-            $count = $GLOBALS['db']->ExecuteScalar("select count(*) from " . $GLOBALS['Tables']['{~~Table~~}'] . " where {~~Table~~}name='" . $d['{~~Table~~}name'] . "'
-				and {~~Key~~} != '" . (int) ${~~Key~~} . "' ");
+            $count = $GLOBALS['db']->ExecuteScalar("select count(*) from " . $GLOBALS['Tables']['country'] . " where countryname='" . $d['countryname'] . "'
+				and id != '" . (int) $id . "' ");
         }
 
         if ($count > 0) {

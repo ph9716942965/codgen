@@ -1,5 +1,4 @@
 <?php
-
 class Database {
     protected $db;
     protected $active_group = 'local';
@@ -9,20 +8,12 @@ class Database {
         $this->db['local'] = array(
             'dsn'   => '',
             'hostname' => 'localhost',//change host name
-            'username' => 'root',		//change
-            'password' => '',			//change
-            'database' => 'gym',//change
+            'username' => 'dev',		//change
+            'password' => 'dev',			//change
+            'database' => 'test',//change
             'dbprefix' => '',
         );
-        $this->db['serverskm'] = array(
-            'dsn'   => '',
-            'hostname' => '109.235.64.249',
-            'username' => 'conserv_skm',
-            'password' => 'P@ssw0rd',
-            'database' => 'conserv_skm',
-            'dbdriver' => 'mysqli',
-            'dbprefix' => '',
-        ); 
+       
     
     $this->link = mysqli_connect($this->db[$this->active_group]['hostname'], $this->db[$this->active_group]['username'], $this->db[$this->active_group]['password'],$this->db[$this->active_group]['database']);
     }
@@ -56,70 +47,32 @@ function get($query){
     $result=$this->query($query);
     return $this->result($result);
 }
-
     function __destruct(){
         mysqli_close($this->link);
         //echo "mysql_close";
     }
 }
-
 class Gen extends Database{
-    public $UserID=5, $Username, $Password, $FullName, $FirstName, $LastName, $Email, $UserRoleID;
-
-    public $Phone,$OrgID,$Tag,$Status, $AllowLogin, $AlertNotify, $AddDate, $EditDate, $LastLogin,$RoleSet,$Gender;
- 
-
-function VariableGen(){
-
-    // $var=[
-    //     'fields'=>['UserID','Username','Password'],
-    //     'primary'=>'UserID',
-    //     'table'=>'mytbl',
-    // ];
     
-    echo "<pre>";
-    $sql='SHOW full COLUMNS FROM testimonial;';
-    $table=$this->get($sql);
+function VariableGen(){
     $TABLE=[];
-    $TABLE['Table']='testimonial';
+    $TABLE['Table']='country';
+    echo "<pre>";
+    $sql='SHOW full COLUMNS FROM '.$TABLE['Table'].';';
+    $table=$this->get($sql);
+    
     foreach($table as $tbl){
         $TABLE['Field'][] = $tbl['Field'];
         $TABLE['Key'] = ($tbl['Key']=='PRI')?$tbl['Field']: $TABLE['Key'];
     }
     $TABLE['obj']=$table;
-/*******
- * $fields['password']['label'] = 'Password';
-        $fields['password']['type'] = 'password';
-        $fields['password']['required'] = true;
- */
-// $fld='';
 
-//  foreach($table as $fields){
-//     if($fields['Key']!='PRI'){
-
-//         $label=($fields['Comment'])?ucwords($fields['Comment']):ucwords($fields['Field']);
-//         $type=(strpos($fields['Type'], 'char') !== false)?'text':'number';
-//         $required=($fields['Null']=='NO')?true:false;
-//         $fld.='$fields[\''.$fields['Field'].'\'][\'label\'] = \''.$label.'\';'."\n";
-//         $fld.='$fields[\''.$fields['Field'].'\'][\'type\'] = \''.$type.'\';'."\n"; //Password|cb|readonly|checkbox
-//         $fld.=($fields['Null']=='NO')
-//                 ?'$fields[\''.$fields['Field'].'\'][\'required\'] = \'true\';':'';
-//         $fld.="\n\n";
-//     }
-   
-//     echo $fld;
-    // $fields['password']['type'] = 'password';
-    // $fields['password']['required'] = true;
- 
-   // print_r(($table));exit;
 return $TABLE;
-//print_r(($TABLE));
    
 }
 
 private function Varname($TBL){
     $return='public ';
-    //echo "hii";print_r($TBL);exit;
     foreach($TBL as $v){
         $return.= '$'.$v.', ';
     }
@@ -127,11 +80,24 @@ private function Varname($TBL){
     return $return.';';
 }
 
-private function GetFields($table){
-    // $sql='SHOW full COLUMNS FROM testimonial;';
-    // $table=$this->get($sql);
+private function GetFields($table,$forinlude=null){
+
     $fld='';
 
+    if($forinlude==true){
+        foreach($table as $fields){
+        $label=($fields['Comment'])?ucwords($fields['Comment']):ucwords($fields['Field']);
+        $type=(strpos($fields['Type'], 'char') !== false)?'string':'number';
+            //if($fields['Key']!='PRI'){
+        $fld.='
+        \''.$fields['Field'].'\' => array(
+            \'type\' => \''.$type.'\',
+            \'name\' => \''.$label.'\'
+        ),';
+        $fld.="\n\n";    
+            //}
+        }
+    }else {
  foreach($table as $fields){
     if($fields['Key']!='PRI'){
         $label=($fields['Comment'])?ucwords($fields['Comment']):ucwords($fields['Field']);
@@ -142,10 +108,36 @@ private function GetFields($table){
         $fld.=($fields['Null']=='NO')
                 ?'$fields[\''.$fields['Field'].'\'][\'required\'] = true;':'';
         $fld.="\n\n";
+        }
+       }
     }
-}
 return $fld;
 }
+
+private function EmptyChecknGen($field){
+
+}
+
+private function Add($tbl){
+    
+    $AddValidation ='';
+    foreach($tbl as $fields){
+        $AddValidation.='else ';
+        if($fields['Null']=='NO' && $fields['Extra']!='auto_increment'){
+            $size = substr($fields['Type'] , strpos($fields['Type'], "("), strpos($fields['Type'], ")"));
+            //$size = substr($String , strpos($fields['Type'], "("), strpos($fields['Type'], ")"));
+           
+            $label=($fields['Comment'])?ucwords($fields['Comment']):ucwords($fields['Field']);
+            $AddValidation.='if (empty($values[\''.$fields['Field'].'\'])) {
+                self::SetError("'.$label .' is required", "'.$size[1].'");
+                return false;
+                
+            }';
+        }
+    }
+    return $AddValidation=ltrim($AddValidation,'else ');
+}   
+
 function ClassGen(){
    
     $Table=$this->VariableGen();
@@ -156,21 +148,64 @@ function ClassGen(){
         '{~~Key~~}'=>$Table['Key'],
         '{~~Table~~}'=>$Table['Table'],
         '{~~Fields~~}'=>$this->GetFields($Table['obj']),
+        '{~~AddValidation~~}'=>$this->Add($Table['obj']),
     ];
 
+    print_r($Table);
     foreach($Gen as $search=>$replace){
         $file=str_replace($search,$replace,$file);
     }
-
     $fileName='class.'.ucfirst($Table['Table']).'.php';
     file_put_contents($fileName,$file);
 }
 
+
+public function includeGenrator(){
+    $Table=$this->VariableGen();
+    $file=file_get_contents('curd/include.php');
+    $dir=$Table['Table'];
+    
+    $Gen=[
+        '{~~CLASS~~}'=>ucfirst($Table['Table']),
+        '{~~FOLDER~~}'=>$dir,
+        '{~~FIELDS~~}'=>$this->Varname($Table['Field']),
+        '{~~Key~~}'=>$Table['Key'],
+        '{~~Table~~}'=>$Table['Table'],
+        '{~~Fields~~}'=>$this->GetFields($Table['obj'],true),
+        '{~~AddValidation~~}'=>$this->Add($Table['obj']),
+    ];
+    print_r($Table);
+
+    foreach($Gen as $search=>$replace){
+        $file=str_replace($search,$replace,$file);
+    }
+    mkdir($Table['Table']);
+    $fileName=$Table['Table'].'/'.'include.php';
+    file_put_contents($fileName,$file);
+
+    
+
+}
+
+public function CurdGenrator(){
+    $temp='<div class="formfield">
+    <label class="formlabel" for="name">Name</label>
+    <div class="forminputwrapper">
+    <input type="text" name="name" id="name" class="forminput" value="' . (isset($filterOptions['name']) ? $filterOptions['name'] : '') . '" />
+    </div>
+    <div class="clear"></div></div>';
+
+    echo $temp;
 }
 
 
 
+}
+
+
+
+
 $obj=new Gen;
+$obj->CurdGenrator();
+$obj->includeGenrator();
 $obj->ClassGen();
- 
- 
