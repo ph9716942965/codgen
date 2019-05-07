@@ -82,47 +82,28 @@ $fields['name']['required'] = true;
                 self::SetError("Name is required", "3");
                 return false;
                 
+            }else if (! self::Validate($values, $GLOBALS['Tables']['country'])) {
+                self::SetError("Please use unique Name", "3");
+                return false;
+            } else if (! \TAS\User::UniqueCountry($values)) {
+                        self::SetError("Please use unique Name", "3");
+                        return false;
+                    }else if (empty($values['name'])) {
+                self::SetError("Name is required", "3");
+                return false;
+                
             }
-        if (! self::Validate($values, $GLOBALS['Tables']['user'])) {
-            self::SetError("Please use unique user name", "10");
-            return false;
-        } else if (! \TAS\User::UniqueUser($values)) {
-            // echo "testhere" ; exit ;
-            self::SetError("Please use unique user name", "10");
-            return false;
-        } else {
+         else {
           
                
-                if ($GLOBALS['db']->Insert($GLOBALS['Tables']['user'], $values)) {
+                if ($GLOBALS['db']->Insert($GLOBALS['Tables']['country'], $values)) {
                     $id = $GLOBALS['db']->GeneratedID();
                     return ($id);
-                }
-            } else {
+                }   else {
                 return false;
-            }
-            
-        // else if (! self::Validate($values, $GLOBALS['Tables']['country'])) {
-        //     self::SetError("Please use unique user name", "10");
-        //     return false;
-            
-        // } else if (! \TAS\User::UniqueUser($values)) {
-        //     //echo "testhere" ; exit ;
-            
-        //     self::SetError("Please use unique user name", "10");
-        //     return false;
-        // } else {
-           
-        //     if (isset($values['phone'])) {
-        //         $values['phone'] = preg_replace('/[^0-9]/', '', $values['phone']);
-                
-        //         if ($GLOBALS['db']->Insert($GLOBALS['Tables']['country'], $values)) {
-        //             $id = $GLOBALS['db']->GeneratedID();
-        //             return ($id);
-        //         }
-        //     } else {
-        //         return false;
-        //     }
-        // }
+                }
+            } 
+        
     }
 
    

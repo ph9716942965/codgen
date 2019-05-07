@@ -2,8 +2,8 @@
 use \TAS\DB;
 function DisplayForm($edit = 0)
 {
-    $actionurl = ($edit > 0) ? "{AdminURL}/country/edit.php?id=" . $edit : "{AdminURL}/country/add.php";
-    $formtitle = ($edit > 0) ? "Edit Country" : "Add Country";
+    $actionurl = ($edit > 0) ? "{AdminURL}/{~~Table~~}/edit.php?id=" . $edit : "{AdminURL}/{~~Table~~}/add.php";
+    $formtitle = ($edit > 0) ? "Edit {~~CLASS~~}" : "Add {~~CLASS~~}";
 
     // if ($edit > 0) {
 	// 	$attribute = $GLOBALS['db']->ExecuteScalarRow("select * from ". $GLOBALS['Tables']['enumeration']. " where enumid=". (int)$edit);
@@ -29,7 +29,7 @@ function DisplayForm($edit = 0)
     //     );
 
 
-    $fields = \TAS\Country::GetFields($edit);
+    $fields = \TAS\{~~CLASS~~}::GetFields($edit);
 
     $param['Fields'] = $fields;
     $param['Group'] = array(
@@ -56,14 +56,14 @@ function DisplayGrid()
     //$userRole = $userid->UserRoleID;
    // $orgid = $userid->OrgID;
 
-    $SQLQuery['basicquery'] = "select * from " . $GLOBALS['Tables']['country'];
+    $SQLQuery['basicquery'] = "select * from " . $GLOBALS['Tables']['{~~Table~~}'];
     $filterOptions = array();
-    $filterOptions=(isset($_COOKIE['admin_list_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET')
-            ? json_decode(stripslashes($_COOKIE['admin_list_filter']), true)
+    $filterOptions=(isset($_COOKIE['{~~Table~~}_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET')
+            ? json_decode(stripslashes($_COOKIE['{~~Table~~}_filter']), true)
             : $_POST;
 
-    // if (isset($_COOKIE['admin_list_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET') {
-    //     $filterOptions = json_decode(stripslashes($_COOKIE['admin_list_filter']), true);
+    // if (isset($_COOKIE['{~~Table~~}_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET') {
+    //     $filterOptions = json_decode(stripslashes($_COOKIE['{~~Table~~}_filter']), true);
     // } else {
     //     $filterOptions = $_POST;
     // }
@@ -95,34 +95,22 @@ function DisplayGrid()
         }
     }
 
-    $SQLQuery['pagingQuery'] = "select count(*) from " . $GLOBALS['Tables']['country'];
+    $SQLQuery['pagingQuery'] = "select count(*) from " . $GLOBALS['Tables']['{~~Table~~}'];
     
-    $_COOKIE['admin_list_filter'] = json_encode($filterOptions);
-    setcookie('admin_list_filter', json_encode($filterOptions), (time() + 25292000));
+    $_COOKIE['{~~Table~~}_filter'] = json_encode($filterOptions);
+    setcookie('{~~Table~~}_filter', json_encode($filterOptions), (time() + 25292000));
 
-    $pages['gridpage'] = $GLOBALS['AppConfig']['AdminURL'] . 'country/index.php';
-    $pages['edit'] = $GLOBALS['AppConfig']['AdminURL'] . 'country/edit.php';
-    $pages['delete'] = $GLOBALS['AppConfig']['AdminURL'] . 'country/index.php';
+    $pages['gridpage'] = $GLOBALS['AppConfig']['AdminURL'] . '{~~Table~~}/index.php';
+    $pages['edit'] = $GLOBALS['AppConfig']['AdminURL'] . '{~~Table~~}/edit.php';
+    $pages['delete'] = $GLOBALS['AppConfig']['AdminURL'] . '{~~Table~~}/index.php';
     
-    $param['defaultorder'] = 'id';
+    $param['defaultorder'] = '{~~Key~~}';
     $param['defaultsort'] = 'desc';
-    $param['indexfield'] = 'id';
-    $param['tablename'] = $GLOBALS['Tables']['country'];
+    $param['indexfield'] = '{~~Key~~}';
+    $param['tablename'] = $GLOBALS['Tables']['{~~Table~~}'];
     $param['fields'] = array(
 
-        
-        'id' => array(
-            'type' => 'number',
-            'name' => 'Id'
-        ),
-
-
-        'name' => array(
-            'type' => 'string',
-            'name' => 'Name'
-        ),
-
-
+        {~~Fields~~}
 
         // 'listid' => array(
         //     'type' => 'string',

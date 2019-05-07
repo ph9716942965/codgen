@@ -53,10 +53,16 @@ function get($query){
     }
 }
 class Gen extends Database{
+
+    public $Table;
+ function __construct($table=null){
+    parent::__construct();
+    $this->Table=$table;
+ }
     
 function VariableGen(){
     $TABLE=[];
-    $TABLE['Table']='country';
+    $TABLE['Table']=($this->Table)?$this->Table:'user';
     echo "<pre>";
     $sql='SHOW full COLUMNS FROM '.$TABLE['Table'].';';
     $table=$this->get($sql);
@@ -121,19 +127,41 @@ private function EmptyChecknGen($field){
 private function Add($tbl){
     
     $AddValidation ='';
-    foreach($tbl as $fields){
+    foreach($tbl['obj'] as $fields){
         $AddValidation.='else ';
         if($fields['Null']=='NO' && $fields['Extra']!='auto_increment'){
             $size = substr($fields['Type'] , strpos($fields['Type'], "("), strpos($fields['Type'], ")"));
             //$size = substr($String , strpos($fields['Type'], "("), strpos($fields['Type'], ")"));
            
             $label=($fields['Comment'])?ucwords($fields['Comment']):ucwords($fields['Field']);
+            
             $AddValidation.='if (empty($values[\''.$fields['Field'].'\'])) {
                 self::SetError("'.$label .' is required", "'.$size[1].'");
                 return false;
                 
             }';
+
+            $AddValidation.='else if (! self::Validate($values, $GLOBALS[\'Tables\'][\''.$this->Table.'\'])) {
+                self::SetError("Please use unique '.$label.'", "'.$size[1].'");
+                return false;
+            }';
+
+            if($fields['Key']=='UNI'){
+                $AddValidation.=' else if (! \TAS\User::Unique'.ucwords($tbl['Table']).ucwords($tbl['Field']).'($values)) {
+                        self::SetError("Please use unique '.$label.'", "'.$size[1].'");
+                        return false;
+                    }';
+            }
+            
+            
+
+            $AddValidation.='else if (empty($values[\''.$fields['Field'].'\'])) {
+                self::SetError("'.$label .' is required", "'.$size[1].'");
+                return false;
+                
+            }';
         }
+
     }
     return $AddValidation=ltrim($AddValidation,'else ');
 }   
@@ -148,7 +176,7 @@ function ClassGen(){
         '{~~Key~~}'=>$Table['Key'],
         '{~~Table~~}'=>$Table['Table'],
         '{~~Fields~~}'=>$this->GetFields($Table['obj']),
-        '{~~AddValidation~~}'=>$this->Add($Table['obj']),
+        '{~~AddValidation~~}'=>$this->Add($Table),
     ];
 
     print_r($Table);
@@ -160,19 +188,20 @@ function ClassGen(){
 }
 
 
-public function includeGenrator(){
+
+public function includeGenrator()
+{
     $Table=$this->VariableGen();
     $file=file_get_contents('curd/include.php');
-    $dir=$Table['Table'];
+    
     
     $Gen=[
         '{~~CLASS~~}'=>ucfirst($Table['Table']),
-        '{~~FOLDER~~}'=>$dir,
         '{~~FIELDS~~}'=>$this->Varname($Table['Field']),
         '{~~Key~~}'=>$Table['Key'],
         '{~~Table~~}'=>$Table['Table'],
         '{~~Fields~~}'=>$this->GetFields($Table['obj'],true),
-        '{~~AddValidation~~}'=>$this->Add($Table['obj']),
+        '{~~AddValidation~~}'=>$this->Add($Table),
     ];
     print_r($Table);
 
@@ -205,7 +234,9 @@ public function CurdGenrator(){
 
 
 
-$obj=new Gen;
-$obj->CurdGenrator();
+$obj=new Gen("country");
+//$obj->CurdGenrator(); 
+
+$obj->ClassGen(); // Complete
+
 $obj->includeGenrator();
-$obj->ClassGen();

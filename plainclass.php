@@ -67,26 +67,32 @@ class {~~CLASS~~} extends \TAS\Entity
         
         return $fields;
     }
+    
+    public static function Add($values = array())
+    {
+        {~~AddValidation~~}
+        else if (! self::Validate($values, $GLOBALS['Tables']['user'])) {
+            self::SetError("Please use unique user name", "10");
+            return false;
+        } else if (! \TAS\User::UniqueUser($values)) {
+            // echo "testhere" ; exit ;
+            self::SetError("Please use unique user name", "10");
+            return false;
+        } else {
+               
+                if ($GLOBALS['db']->Insert($GLOBALS['Tables']['user'], $values)) {
+                    $id = $GLOBALS['db']->GeneratedID();
+                    return ($id);
+                } else {
+                return false;
+            }
+        }
+        
+    }
 
     
 
-    public static function Add($values = array())
-    {
 
-
-        {~~AddValidation~~}
-         else {
-          
-               
-                if ($GLOBALS['db']->Insert($GLOBALS['Tables']['{~~Table~~}'], $values)) {
-                    $id = $GLOBALS['db']->GeneratedID();
-                    return ($id);
-                }   else {
-                return false;
-                }
-            } 
-        
-    }
 
    
     public function Update($values = array())
