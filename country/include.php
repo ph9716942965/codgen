@@ -5,12 +5,6 @@ function DisplayForm($edit = 0)
     $actionurl = ($edit > 0) ? "{AdminURL}/country/edit.php?id=" . $edit : "{AdminURL}/country/add.php";
     $formtitle = ($edit > 0) ? "Edit Country" : "Add Country";
 
-    // if ($edit > 0) {
-	// 	$attribute = $GLOBALS['db']->ExecuteScalarRow("select * from ". $GLOBALS['Tables']['enumeration']. " where enumid=". (int)$edit);
-	// } else {
-	// 	$attribute = array('ekey'=>'', 'value'=>'', 'enumid'=>0);
-    // }
-    
 
     $fields = array();
 
@@ -52,53 +46,34 @@ function DisplayForm($edit = 0)
 
 function DisplayGrid()
 {
-   // $userid = new \TAS\User($_SESSION['userid']);
-    //$userRole = $userid->UserRoleID;
-   // $orgid = $userid->OrgID;
+  
 
     $SQLQuery['basicquery'] = "select * from " . $GLOBALS['Tables']['country'];
     $filterOptions = array();
-    $filterOptions=(isset($_COOKIE['admin_list_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET')
-            ? json_decode(stripslashes($_COOKIE['admin_list_filter']), true)
+    $filterOptions=(isset($_COOKIE['country_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET')
+            ? json_decode(stripslashes($_COOKIE['country_filter']), true)
             : $_POST;
 
-    // if (isset($_COOKIE['admin_list_filter']) && $_SERVER['REQUEST_METHOD'] == 'GET') {
-    //     $filterOptions = json_decode(stripslashes($_COOKIE['admin_list_filter']), true);
-    // } else {
-    //     $filterOptions = $_POST;
-    // }
+
 
     $filter = [];
-    
-    if (isset($filterOptions['listname']) && $filterOptions['listname'] != '') {
-        $filter[] = "l.listname LIKE '%" . DoSecure($filterOptions['listname']) . "%'";
-    }
 
-    if(isset($filterOptions['orgid']))
-    {
-        foreach($filterOptions['orgid'] as $orgid)
-        {
-            $filter[] = " l.orgid like '%" . $GLOBALS['db']->Escape($orgid) . "%'";
-        }
-    }
+    $filter[] = "l.name LIKE '%" . DoSecure($filterOptions['name']) . "%'";
     
-    $orgidset = array();
-    $orgidset[] = "l.orgid =" . DoSecure($orgid) . "";
-    
+   
     if (count($filter) > 0) {
         $SQLQuery['where'] = ' where ' . implode(' or ', $filter) . ' ';
-    } else {
-        if ($userRole != '1') {
-            $SQLQuery['where'] = ' where ' . implode(' and ', $orgidset) . ' ';
-        } else {
-            $SQLQuery['where'] = '';
-        }
-    }
+    } 
+    else
+     {
+         $SQLQuery['where'] = '';
+     }
+   
 
     $SQLQuery['pagingQuery'] = "select count(*) from " . $GLOBALS['Tables']['country'];
     
-    $_COOKIE['admin_list_filter'] = json_encode($filterOptions);
-    setcookie('admin_list_filter', json_encode($filterOptions), (time() + 25292000));
+    $_COOKIE['country_filter'] = json_encode($filterOptions);
+    setcookie('country_filter', json_encode($filterOptions), (time() + 25292000));
 
     $pages['gridpage'] = $GLOBALS['AppConfig']['AdminURL'] . 'country/index.php';
     $pages['edit'] = $GLOBALS['AppConfig']['AdminURL'] . 'country/edit.php';
@@ -128,14 +103,6 @@ function DisplayGrid()
         //     'type' => 'string',
         //     'name' => '#'
         // ),
-        // 'listname' => array(
-        //     'type' => 'string',
-        //     'name' => 'List Name'
-        // ),
-        // 'orgname' => array(
-        //     'type' => 'string',
-        //     'name' => 'Organisation Name'
-        // ),
         // 'status' => array(
         //     'type' => 'onoff',
         //     'name' => 'Status',
@@ -153,16 +120,10 @@ function DisplayGrid()
     // $extraIcons[0]['tagname'] = 'addproductlist';
     // $extraIcons[0]['paramname'] = 'listid';
     // $extraIcons[0]['iconparent'] = 'fa';
-    // $extraIcons[1]['link'] = $GLOBALS['AppConfig']['AdminURL'] . 'list/userlist.php';
-    // $extraIcons[1]['iconclass'] = 'fa-user';
-    // $extraIcons[1]['tooltip'] = 'User List';
-    // $extraIcons[1]['tagname'] = 'adduserlist';
-    // $extraIcons[1]['paramname'] = 'userid';
-    // $extraIcons[1]['iconparent'] = 'fa';
+    
 
      $param['extraicons'] = $extraIcons;
-    //print_R($SQLQuery);
-    $listing = \TAS\Utility::HTMLGridFromRecordSet($SQLQuery, $pages, 'list', $param);
-    return $listing;
+    $Country = \TAS\Utility::HTMLGridFromRecordSet($SQLQuery, $pages, 'country', $param);
+    return $Country;
 }
 

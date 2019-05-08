@@ -187,13 +187,47 @@ function ClassGen(){
     file_put_contents($fileName,$file);
 }
 
+private function filter($tbl,$form=false){
+   // echo "191";print_r($tbl);exit;
+    // $TableObj=$tbl['obj'];
+
+    $filter='';
+    foreach($tbl['obj'] as $field){
+        if($field['Key']!='PRI'){
+            if($form){
+
+                $label=($field['Comment'])?ucwords($field['Comment']):ucwords($field['Field']);
+            
+                $filter.= '<div class="formfield">
+                <label class="formlabel" for="'.$field['Field'].'">'.$label.'</label>
+                <div class="forminputwrapper">
+                <input type="text" name="'.$field['Field'].'" id="'.$field['Field'].'" class="forminput" value="\' . (isset($filterOptions[\''.$field['Field'].'\']) ? $filterOptions[\''.$field['Field'].'\'] : \'\') . \'" />
+                </div>
+                <div class="clear"></div></div>';;  
+            } else {
+       
+            $filter.=  '$filter[] = "l.'.$field['Field'].' LIKE \'%" . DoSecure($filterOptions[\''.$field['Field'].'\']) . "%\'";';  
+       
+        }
+        }
+
+    }
+    return $filter;
+    // $tpl= 
+    // '$filter[] = "l.listname LIKE \'%" . DoSecure($filterOptions[\'listname\']) . "%\'"';
+
+    
+}
+
 
 
 public function includeGenrator()
 {
     $Table=$this->VariableGen();
     $file=file_get_contents('curd/include.php');
-    
+    $fileHTML=file_get_contents('curd/index.php');
+    $AddPHP=file_get_contents('curd/add.php');
+    $EditPHP=file_get_contents('curd/edit.php');
     
     $Gen=[
         '{~~CLASS~~}'=>ucfirst($Table['Table']),
@@ -202,16 +236,24 @@ public function includeGenrator()
         '{~~Table~~}'=>$Table['Table'],
         '{~~Fields~~}'=>$this->GetFields($Table['obj'],true),
         '{~~AddValidation~~}'=>$this->Add($Table),
+        '{~~Filter~~}'=>$this->filter($Table),
+        '{~~FilterHTML~~}'=>$this->filter($Table,true),
     ];
     print_r($Table);
 
     foreach($Gen as $search=>$replace){
         $file=str_replace($search,$replace,$file);
+        $fileHTML=str_replace($search,$replace,$fileHTML);
+        $AddPHP=str_replace($search,$replace,$AddPHP);
+        $EditPHP=str_replace($search,$replace,$EditPHP);
     }
     mkdir($Table['Table']);
     $fileName=$Table['Table'].'/'.'include.php';
-    file_put_contents($fileName,$file);
 
+    file_put_contents($fileName,$file);
+    file_put_contents($Table['Table'].'/'.'index.php',$fileHTML);
+    file_put_contents($Table['Table'].'/'.'add.php',$AddPHP);
+    file_put_contents($Table['Table'].'/'.'edit.php',$EditPHP);
     
 
 }
@@ -237,6 +279,6 @@ public function CurdGenrator(){
 $obj=new Gen("country");
 //$obj->CurdGenrator(); 
 
-$obj->ClassGen(); // Complete
+//$obj->ClassGen(); // Complete
 
 $obj->includeGenrator();
